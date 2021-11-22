@@ -46,6 +46,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(cuke INTERFACE)
 target_link_libraries(cuke INTERFACE asio::asio nlohmann_json::nlohmann_json GTest::gtest GTest::gmock)
 target_include_directories(cuke INTERFACE .)
+add_library(cuke::cuke ALIAS cuke)
 
 add_subdirectory(test)
 add_subdirectory(example/calculator)

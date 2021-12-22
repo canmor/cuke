@@ -9,13 +9,13 @@ namespace cuke {
     public:
         static step_engine &engine() {
             static step_hub instance;
-            return instance.step_engine;
+            return instance.a_engine;
         }
 
     private:
         step_hub() = default;
 
-        step_engine step_engine;
+        step_engine a_engine;
     };
 
     struct definer {

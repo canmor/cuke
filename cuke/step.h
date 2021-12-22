@@ -45,11 +45,13 @@ namespace cuke {
     template<typename Type>
     static Type to_value(const std::string &input) {
         if constexpr(std::is_same_v<int, Type>) {
+            // fixme: handle exception
             return std::stoi(input);
         } else if constexpr(std::is_same_v<double, Type>) {
+            // fixme: handle exception
             return std::stod(input);
         } else {
-            return Type{input};
+            return Type(input);
         }
     }
 
@@ -74,18 +76,27 @@ namespace cuke {
         step_with_args(std::string_view matcher, location loc, handler_type handler)
                 : step(matcher, loc), handler(std::move(handler)) {}
 
+        template<typename T, std::size_t... I>
+        auto invoke_handler_with_scenario(T &scenario, const std::vector<std::string> &parameters,
+                                          std::index_sequence<I...>) {
+            return handler(scenario, to_value<std::remove_reference_t<ArgTypes>>(parameters[I])...);
+        }
+
+        template<std::size_t... I>
+        auto invoke_handler(const std::vector<std::string> &parameters, std::index_sequence<I...>) {
+            return handler(to_value<std::remove_reference_t<FirstType>>(parameters[0]),
+                           to_value<std::remove_reference_t<ArgTypes>>(parameters[I + 1])...);
+        }
+
         int invoke(scenario_ref &scenario_ref, const std::vector<std::string> &parameters) override {
             using RawFirstType = std::remove_const_t<std::remove_reference_t<FirstType>>;
             if constexpr(is_context<RawFirstType>::value) {
+                assert(parameters.size() == sizeof...(ArgTypes) && "parameters count not match");
                 auto &scenario = scenario_ref.ensure<RawFirstType>();
-                auto first = parameters.begin();
-                assert(parameters.size() == sizeof...(ArgTypes));
-                handler(scenario, to_value<std::remove_reference_t<ArgTypes>>(*first++)...);
+                invoke_handler_with_scenario(scenario, parameters, std::index_sequence_for<ArgTypes...>{});
             } else {
-                assert(parameters.size() == sizeof...(ArgTypes) + 1);
-                auto first = parameters.begin();
-                auto second = parameters.begin() + 1;
-                handler(to_value<FirstType>(*first), to_value<std::remove_reference_t<ArgTypes>>(*second++)...);
+                assert(parameters.size() == sizeof...(ArgTypes) + 1 && "parameters count not match");
+                invoke_handler(parameters, std::index_sequence_for<ArgTypes...>{});
             }
             return 0;
         }

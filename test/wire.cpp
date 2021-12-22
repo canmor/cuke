@@ -6,7 +6,6 @@ using ::testing::Eq;
 using ::testing::MockFunction;
 using ::nlohmann::json;
 using cuke::step_engine;
-using cuke::session;
 using cuke::location;
 
 class Wire : public ::testing::Test {
@@ -14,7 +13,7 @@ protected:
     step_engine engine;
     std::stringstream in;
     std::stringstream out;
-    session session{in, out, engine};
+    cuke::session session{in, out, engine};
 };
 
 TEST_F(Wire, UnknownCommand) {

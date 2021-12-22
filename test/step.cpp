@@ -4,8 +4,10 @@
 using ::testing::IsTrue;
 using ::testing::NotNull;
 using ::testing::Eq;
+using ::testing::StrEq;
 using ::testing::DoubleEq;
 using ::testing::MockFunction;
+using ::testing::_;
 using cuke::step_engine;
 
 class Step : public ::testing::Test {
@@ -63,6 +65,15 @@ TEST_F(Step, DoubleAndIntArg) {
     auto matched = hub.run(0, {"3.14", "300"});
 }
 
+TEST_F(Step, StringAndIntArg) {
+    MockFunction<void(const std::string &, double)> mock;
+    EXPECT_CALL(mock, Call(StrEq("hello world"), Eq(300))).Times(1);
+
+    hub.define(R"(input string (\w+), double (\d+\.?\d*))", mock.AsStdFunction());
+
+    auto matched = hub.run(0, {"hello world", "300"});
+}
+
 TEST_F(Step, StringUTF8) {
     hub.define(R"(我输入: (.+))", [](const std::string &word) {});
 
@@ -84,4 +95,13 @@ TEST_F(StepWithContext, NoArg) {
     auto[step, _, __] = hub.match("hello");
 
     EXPECT_THAT(step, NotNull());
+}
+
+TEST_F(StepWithContext, StringAndIntArg) {
+    MockFunction<void(Context &ctx, const std::string &, double)> mock;
+    EXPECT_CALL(mock, Call(_, StrEq("hello world"), Eq(300))).Times(1);
+
+    hub.define(R"(input string (\w+), double (\d+\.?\d*))", mock.AsStdFunction());
+
+    auto matched = hub.run(0, {"hello world", "300"});
 }

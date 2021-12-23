@@ -9,7 +9,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 if (NOT TARGET GTest::gtest)
     find_package(GTest QUIET)
-    if (NOT gtest_FOUND)
+    if (NOT GTest_FOUND)
         include(FetchContent)
         FetchContent_Declare(gtest
                 GIT_REPOSITORY ${GTEST_GIT_REPOSITORY}

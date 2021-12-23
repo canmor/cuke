@@ -28,19 +28,10 @@ namespace cuke {
             return match(std::wstring_view{input});
         }
 
-        bool run(size_t id, const std::vector<std::string> &args) {
+        bool run(size_t id, const std::vector<std::string> &args, const step::table_type &table = {}) {
             auto step = get(id);
             if (step) {
-                step->invoke(scenario, args);
-                return true;
-            }
-            return false;
-        }
-
-        bool run_with_table(size_t id, step::table_type &table) {
-            auto step = get(id);
-            if (step) {
-                step->invoke(scenario, table);
+                step->invoke(scenario, args, table);
                 return true;
             }
             return false;

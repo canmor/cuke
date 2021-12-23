@@ -76,7 +76,7 @@ namespace cuke {
                     engine.run(step_id, args);
                 } else if (args_ref[0].is_array()) {
                     step::table_type table = args[0];
-                    engine.run_with_table(step_id, table);
+                    engine.run(step_id, {}, table);
                 }
             } catch (const std::runtime_error &error) {
                 auto type = "fail";

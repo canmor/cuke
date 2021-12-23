@@ -85,7 +85,7 @@ TEST_F(Step, DataTable) {
 
     hub.define(R"(step with data table)", mock.AsStdFunction());
 
-    auto matched = hub.run_with_table(0, args);
+    auto matched = hub.run(0, {}, args);
 }
 
 TEST_F(Step, StringUTF8) {
@@ -131,5 +131,5 @@ TEST_F(StepWithContext, DataTable) {
 
     hub.define(R"(step with data table)", mock.AsStdFunction());
 
-    auto matched = hub.run_with_table(0, args);
+    auto matched = hub.run(0, {}, args);
 }

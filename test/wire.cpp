@@ -127,6 +127,29 @@ TEST_F(Wire, handlesInvokeMessageWithArgs) {
     EXPECT_THAT(response, Eq(R"( [ "success" ] )"_json.dump()));
 }
 
+TEST_F(Wire, handleInvokeMessageWithDataTableArgs) {
+    std::vector<std::vector<std::string>> table{
+            {"name",   "email",              "twitter"},
+            {"Aslak",  "aslak@cucumber.io",  "@aslak_hellesoy"},
+            {"Julien", "julien@cucumber.io", "@jbpros"},
+            {"Matt",   "matt@cucumber.io",   "@mattwynne"},
+    };
+    MockFunction<void(const std::vector<std::vector<std::string>> &table)> mock;
+    EXPECT_CALL(mock, Call(Eq(table))).Times(1);
+    engine.define(R"(with data table:)", mock.AsStdFunction());
+
+    in << R"(["invoke",{"id":"0","args":[[["name","email","twitter"],)"
+       << R"(["Aslak","aslak@cucumber.io","@aslak_hellesoy"],)"
+       << R"(["Julien","julien@cucumber.io","@jbpros"],)"
+       << R"(["Matt","matt@cucumber.io","@mattwynne"]]]}])"
+       << std::endl;
+    session.run();
+
+    std::string response;
+    std::getline(out, response);
+    EXPECT_THAT(response, Eq(R"( [ "success" ] )"_json.dump()));
+}
+
 TEST_F(Wire, handlesSnippet) {
     in << R"(["snippet_text"])" << std::endl;
     session.run();

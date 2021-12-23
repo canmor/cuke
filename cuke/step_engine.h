@@ -37,6 +37,15 @@ namespace cuke {
             return false;
         }
 
+        bool run_with_table(size_t id, step::table_type &table) {
+            auto step = get(id);
+            if (step) {
+                step->invoke(scenario, table);
+                return true;
+            }
+            return false;
+        }
+
         template<typename... types>
         int define(std::string_view desc, std::function<void(types...)> callback, location location) {
             steps.push_back(make_step(desc, callback, location));

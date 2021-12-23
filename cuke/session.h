@@ -68,9 +68,16 @@ namespace cuke {
         json handle_invoke(const json &command_detail) {
             std::string id = command_detail["id"];
             auto step_id = std::stoul(id);
-            std::vector<std::string> args = command_detail["args"];
             try {
-                engine.run(step_id, args);
+                auto &args_ref = command_detail["args"];
+                std::vector<json> args = args_ref;
+                if (args.empty() || args[0].is_string()) {
+                    std::vector<std::string> args = args_ref;
+                    engine.run(step_id, args);
+                } else if (args_ref[0].is_array()) {
+                    step::table_type table = args[0];
+                    engine.run_with_table(step_id, table);
+                }
             } catch (const std::runtime_error &error) {
                 auto type = "fail";
                 json result{{"exception", ""},

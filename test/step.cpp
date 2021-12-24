@@ -88,6 +88,20 @@ TEST_F(Step, DataTable) {
     auto matched = hub.run(0, {}, args);
 }
 
+TEST_F(Step, IntAndDataTable) {
+    MockFunction<void(int, const std::vector<std::vector<std::string>> &)> mock;
+    std::vector<std::vector<std::string>> args{
+            {"key1",   "key2"},
+            {"value1", "value2"},
+            {"valueA", "valueB"}
+    };
+    EXPECT_CALL(mock, Call(1024, args)).Times(1);
+
+    hub.define(R"(step input: (\d+) and data table)", mock.AsStdFunction());
+
+    auto matched = hub.run(0, {"1024"}, args);
+}
+
 TEST_F(Step, StringUTF8) {
     hub.define(R"(我输入: (.+))", [](const std::string &word) {});
 
@@ -132,4 +146,18 @@ TEST_F(StepWithContext, DataTable) {
     hub.define(R"(step with data table)", mock.AsStdFunction());
 
     auto matched = hub.run(0, {}, args);
+}
+
+TEST_F(StepWithContext, IntAndDataTable) {
+    MockFunction<void(Context &ctx, int, const std::vector<std::vector<std::string>> &)> mock;
+    std::vector<std::vector<std::string>> args{
+            {"key1",   "key2"},
+            {"value1", "value2"},
+            {"valueA", "valueB"}
+    };
+    EXPECT_CALL(mock, Call(_, 1024, args)).Times(1);
+
+    hub.define(R"(step input: (\d+) and data table)", mock.AsStdFunction());
+
+    auto matched = hub.run(0, {"1024"}, args);
 }

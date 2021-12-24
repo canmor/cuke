@@ -35,7 +35,7 @@ namespace cuke {
     struct is_context : std::true_type {
     };
     template<typename T>
-    inline constexpr bool is_context_v = is_context<T>::value;
+    inline constexpr bool is_context_v = is_context<std::remove_const_t<std::remove_reference_t<T>>>::value;
     template<>
     struct is_context<int> : std::false_type {
     };
@@ -49,16 +49,25 @@ namespace cuke {
     struct is_context<std::vector<std::vector<std::string>>> : std::false_type {
     };
 
-    template<typename Type>
-    static Type to_value(const std::string &input) {
-        if constexpr(std::is_same_v<int, Type>) {
+    template<typename T>
+    struct is_table : std::false_type {
+    };
+    template<typename T>
+    inline constexpr bool is_table_v = is_table<std::remove_const_t<std::remove_reference_t<T>>>::value;
+    template<>
+    struct is_table<step::table_type> : std::true_type {
+    };
+
+    template<typename T, typename U = std::remove_const_t<std::remove_reference_t<T>>>
+    static U to_value(const std::string &input) {
+        if constexpr(std::is_same_v<int, U>) {
             // fixme: handle exception
             return std::stoi(input);
-        } else if constexpr(std::is_same_v<double, Type>) {
+        } else if constexpr(std::is_same_v<double, U>) {
             // fixme: handle exception
             return std::stod(input);
         } else {
-            return Type(input);
+            return U(input);
         }
     }
 
@@ -84,46 +93,76 @@ namespace cuke {
         step_with_args(std::string_view matcher, location loc, handler_type handler)
                 : step(matcher, loc), handler(std::move(handler)) {}
 
+        int invoke(scenario_ref &scenario_ref, const std::vector<std::string> &parameters,
+                   const table_type &table) override {
+            if constexpr(is_context_v<FirstType>) {
+                auto &scenario = scenario_ref.ensure<FirstType>();
+                invoke_handler_with_scenario(scenario, parameters, table, std::index_sequence_for<ArgTypes...>{});
+            } else {
+                invoke_handler(parameters, table, std::index_sequence_for<ArgTypes...>{});
+            }
+            return 0;
+        }
+
+    private:
+        template<typename T, std::size_t... I>
+        auto invoke_handler_with_scenario_and_table(T &scenario, const std::vector<std::string> &parameters,
+                                                    const step::table_type &table,
+                                                    std::index_sequence<I...>) {
+            using args_type = std::tuple<ArgTypes...>;
+            return handler(scenario,
+                           to_value<std::tuple_element_t<I, args_type>>(parameters[I])...,
+                           const_cast<step::table_type &>(table));
+        }
+
         template<typename T, std::size_t... I>
         auto invoke_handler_with_scenario(T &scenario, const std::vector<std::string> &parameters,
                                           const step::table_type &table,
                                           std::index_sequence<I...>) {
             if constexpr(sizeof...(ArgTypes) > 0) {
                 using first_arg_type = std::tuple_element_t<0, std::tuple<ArgTypes...>>;
-                using first_arg_raw_type = std::remove_const_t<std::remove_reference_t<first_arg_type>>;
-                if constexpr(std::is_same_v<first_arg_raw_type, step::table_type>) {
+                if constexpr(is_table_v<first_arg_type>) {
                     return handler(scenario, const_cast<step::table_type &>(table));
                 } else {
-                    return handler(scenario, to_value<std::remove_reference_t<ArgTypes>>(parameters[I])...);
+                    using last_arg_type = decltype((std::declval<ArgTypes>(), ...));
+                    if constexpr(is_table_v<last_arg_type>) {
+                        return invoke_handler_with_scenario_and_table(scenario, parameters, table,
+                                                                      std::make_index_sequence<
+                                                                              sizeof...(ArgTypes) - 1>{});
+                    } else {
+                        return handler(scenario, to_value<ArgTypes>(parameters[I])...);
+                    }
                 }
             } else {
-                return handler(scenario, to_value<std::remove_reference_t<ArgTypes>>(parameters[I])...);
+                return handler(scenario, to_value<ArgTypes>(parameters[I])...);
             }
+        }
+
+        template<std::size_t... I>
+        auto invoke_handler_with_table(const std::vector<std::string> &parameters,
+                                       const step::table_type &table,
+                                       std::index_sequence<I...>) {
+            using args_type = std::tuple<ArgTypes...>;
+            return handler(to_value<FirstType>(parameters[0]),
+                           to_value<std::tuple_element_t<I, args_type>>(parameters[I + 1])...,
+                           const_cast<step::table_type &>(table));
         }
 
         template<std::size_t... I>
         auto invoke_handler(const std::vector<std::string> &parameters,
                             const step::table_type &table,
                             std::index_sequence<I...>) {
-            using RawFirstType = std::remove_const_t<std::remove_reference_t<FirstType>>;
-            if constexpr(std::is_same_v<RawFirstType, step::table_type>) {
+            if constexpr(is_table_v<FirstType>) {
                 return handler(const_cast<step::table_type &>(table));
             } else {
-                return handler(to_value<std::remove_reference_t<FirstType>>(parameters[0]),
-                               to_value<std::remove_reference_t<ArgTypes>>(parameters[I + 1])...);
+                using last_arg_type = decltype((std::declval<ArgTypes>(), ...));
+                if constexpr(is_table_v<last_arg_type>) {
+                    return invoke_handler_with_table(parameters, table,
+                                                     std::make_index_sequence<sizeof...(ArgTypes) - 1>{});
+                } else {
+                    return handler(to_value<FirstType>(parameters[0]), to_value<ArgTypes>(parameters[I + 1])...);
+                }
             }
-        }
-
-        int invoke(scenario_ref &scenario_ref, const std::vector<std::string> &parameters,
-                   const table_type &table) override {
-            using RawFirstType = std::remove_const_t<std::remove_reference_t<FirstType>>;
-            if constexpr(is_context<RawFirstType>::value) {
-                auto &scenario = scenario_ref.ensure<RawFirstType>();
-                invoke_handler_with_scenario(scenario, parameters, table, std::index_sequence_for<ArgTypes...>{});
-            } else {
-                invoke_handler(parameters, table, std::index_sequence_for<ArgTypes...>{});
-            }
-            return 0;
         }
     };
 

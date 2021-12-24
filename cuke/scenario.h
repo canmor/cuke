@@ -10,12 +10,12 @@ namespace cuke {
             impl.reset();
         };
 
-        template<typename T>
-        T &ensure() {
+        template<typename T, typename U = std::remove_const_t<std::remove_reference_t<T>>>
+        U &ensure() {
             if (!impl) {
-                impl = std::make_shared<T>();
+                impl = std::make_shared<U>();
             }
-            return *static_cast<T *>(impl.get());
+            return *static_cast<U *>(impl.get());
         }
 
     private:

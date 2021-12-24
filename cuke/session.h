@@ -83,6 +83,11 @@ namespace cuke {
                 json result{{"exception", ""},
                             {"message",   error.what()}};
                 return json::array({type, result});
+            } catch (const std::exception &error) {
+                auto type = "fail";
+                json result{{"exception", ""},
+                            {"message",   std::string("unknown exception: ") + error.what()}};
+                return json::array({type, result});
             }
             auto type = "success";
             return json::array({type});

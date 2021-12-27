@@ -44,7 +44,9 @@ namespace cuke {
     private:
         json handle_step_matches(const json &command_detail) {
             std::string name = command_detail["name_to_match"];
-            auto[step, id, args] = engine.match(to_wstring(name));
+            // it's important to keep unicode name alive to prevent UB while reading args later
+            const auto unicode_name = to_wstring(name);
+            auto[step, id, args] = engine.match(unicode_name);
             auto result = json::array();
             if (step) {
                 json match_response;

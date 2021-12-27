@@ -71,15 +71,21 @@ namespace cuke {
             std::string id = command_detail["id"];
             auto step_id = std::stoul(id);
             try {
+                std::vector<std::string> regular_args;
+                step::table_type table;
                 auto &args_ref = command_detail["args"];
                 std::vector<json> args = args_ref;
-                if (args.empty() || args[0].is_string()) {
-                    std::vector<std::string> args = args_ref;
-                    engine.run(step_id, args);
-                } else if (args_ref[0].is_array()) {
-                    step::table_type table = args[0];
-                    engine.run(step_id, {}, table);
+                if (!args.empty()) {
+                    auto last = args.end();
+                    if (!args.back().is_string()) {
+                        table = std::move(static_cast<step::table_type>(args.back()));
+                        --last;
+                    }
+                    std::transform(args.begin(), last, std::back_inserter(regular_args), [](auto &json) {
+                        return static_cast<std::string>(json);
+                    });
                 }
+                engine.run(step_id, regular_args, table);
             } catch (const std::runtime_error &error) {
                 auto type = "fail";
                 json result{{"exception", ""},

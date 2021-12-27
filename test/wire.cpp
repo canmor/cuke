@@ -3,6 +3,7 @@
 #include "cuke/session.h"
 
 using ::testing::Eq;
+using ::testing::StrEq;
 using ::testing::MockFunction;
 using ::nlohmann::json;
 using cuke::step_engine;
@@ -139,6 +140,29 @@ TEST_F(Wire, handleInvokeMessageWithDataTableArgs) {
     engine.define(R"(with data table:)", mock.AsStdFunction());
 
     in << R"(["invoke",{"id":"0","args":[[["name","email","twitter"],)"
+       << R"(["Aslak","aslak@cucumber.io","@aslak_hellesoy"],)"
+       << R"(["Julien","julien@cucumber.io","@jbpros"],)"
+       << R"(["Matt","matt@cucumber.io","@mattwynne"]]]}])"
+       << std::endl;
+    session.run();
+
+    std::string response;
+    std::getline(out, response);
+    EXPECT_THAT(response, Eq(R"( [ "success" ] )"_json.dump()));
+}
+
+TEST_F(Wire, handleInvokeMessageWithStringAndDataTableArgs) {
+    std::vector<std::vector<std::string>> table{
+            {"name",   "email",              "twitter"},
+            {"Aslak",  "aslak@cucumber.io",  "@aslak_hellesoy"},
+            {"Julien", "julien@cucumber.io", "@jbpros"},
+            {"Matt",   "matt@cucumber.io",   "@mattwynne"},
+    };
+    MockFunction<void(const std::string &, const std::vector<std::vector<std::string>> &)> mock;
+    EXPECT_CALL(mock, Call(StrEq("hello"), Eq(table))).Times(1);
+    engine.define(R"(with data table:)", mock.AsStdFunction());
+
+    in << R"(["invoke",{"id":"0","args":["hello", [["name","email","twitter"],)"
        << R"(["Aslak","aslak@cucumber.io","@aslak_hellesoy"],)"
        << R"(["Julien","julien@cucumber.io","@jbpros"],)"
        << R"(["Matt","matt@cucumber.io","@mattwynne"]]]}])"

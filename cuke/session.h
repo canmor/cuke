@@ -73,17 +73,15 @@ namespace cuke {
             try {
                 std::vector<std::string> regular_args;
                 step::table_type table;
-                auto &args_ref = command_detail["args"];
-                std::vector<json> args = args_ref;
+                std::vector<json> args = command_detail["args"];
                 if (!args.empty()) {
                     auto last = args.end();
                     if (!args.back().is_string()) {
-                        table = std::move(static_cast<step::table_type>(args.back()));
+                        step::table_type tmp = args.back();
+                        table = std::move(tmp);
                         --last;
                     }
-                    std::transform(args.begin(), last, std::back_inserter(regular_args), [](auto &json) {
-                        return static_cast<std::string>(json);
-                    });
+                    regular_args.assign(args.begin(), last);
                 }
                 engine.run(step_id, regular_args, table);
             } catch (const std::runtime_error &error) {

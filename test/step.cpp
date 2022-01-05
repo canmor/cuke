@@ -105,7 +105,7 @@ TEST_F(Step, IntAndDataTable) {
 TEST_F(Step, StringUTF8) {
     hub.define(R"(我输入: (.+))", [](const std::string &word) {});
 
-    auto[step, _, args] = hub.match("我输入: 你好");
+    auto[step, _, args] = hub.match(L"我输入: 你好");
 
     EXPECT_THAT(step, NotNull());
     EXPECT_THAT(args.position(1), Eq(5));
@@ -120,7 +120,7 @@ struct Context {
 TEST_F(StepWithContext, NoArg) {
     hub.define("hello", [](Context &ctx) {});
 
-    auto[step, _, __] = hub.match("hello");
+    auto[step, _, __] = hub.match(L"hello");
 
     EXPECT_THAT(step, NotNull());
 }

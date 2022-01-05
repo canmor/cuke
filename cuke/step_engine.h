@@ -9,23 +9,18 @@
 namespace cuke {
     class step_engine {
     public:
-        std::tuple<step *, size_t, std::wcmatch> match(std::wstring_view desc) {
-            std::wcmatch matches;
-            auto found = std::find_if(steps.begin(), steps.end(), [&matches, desc](const auto &step) {
+        std::tuple<step *, size_t, std::wsmatch> match(const std::wstring &input) {
+            std::wsmatch matches;
+            auto found = std::find_if(steps.begin(), steps.end(), [&matches, &input](const auto &step) {
                 const std::wstring s = to_wstring(step->matcher);
                 std::wregex step_regex{s};
-                return std::regex_match(desc.begin(), desc.end(), matches, step_regex);
+                return std::regex_match(input, matches, step_regex);
             });
             if (found != steps.end()) {
                 auto id = std::distance(steps.begin(), found);
                 return {&**found, id, matches};
             }
             return {};
-        }
-
-        std::tuple<step *, size_t, std::wcmatch> match(std::string_view desc) {
-            const std::wstring input = to_wstring(desc);
-            return match(std::wstring_view{input});
         }
 
         bool run(size_t id, const std::vector<std::string> &args, const step::table_type &table = {}) {

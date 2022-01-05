@@ -104,8 +104,9 @@ TEST_F(Step, IntAndDataTable) {
 
 TEST_F(Step, StringUTF8) {
     hub.define(R"(我输入: (.+))", [](const std::string &word) {});
+    const auto input = cuke::to_wstring("我输入: 你好");
 
-    auto[step, _, args] = hub.match(L"我输入: 你好");
+    auto[step, _, args] = hub.match(input);
 
     EXPECT_THAT(step, NotNull());
     EXPECT_THAT(args.position(1), Eq(5));

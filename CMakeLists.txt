@@ -17,5 +17,6 @@ endif ()
 target_include_directories(cuke INTERFACE .)
 add_library(cuke::cuke ALIAS cuke)
 
+enable_testing()
 add_subdirectory(test)
 add_subdirectory(example/calculator)

@@ -1,0 +1,18 @@
+set(NLOHMANN_JSON_URL "https://github.com/nlohmann/json/archive/refs/tags/v3.10.4.zip" CACHE STRING "nlohmann_json URL")
+set(NLOHMANN_JSON_URL_HASH "MD5=59c2a25e17b94d612fdb32a1a37378cf" CACHE STRING "nlohmann_json URL HASH")
+set(NLOHMANN_JSON_GIT_REPOSITORY "https://github.com/nlohmann/json" CACHE STRING "nlohmann_json Git Repository URL")
+set(NLOHMANN_JSON_GIT_TAG "v3.10.4" CACHE STRING "nlohmann_json Git Repository TAG")
+
+if (NOT TARGET nlohmann_json::nlohmann_json)
+    find_package(nlohmann_json QUIET)
+    if (NOT nlohmann_json_FOUND)
+        include(FetchContent)
+        if (NLOHMANN_JSON_URL STREQUAL "")
+            FetchContent_Declare(nlohmann_json GIT_REPOSITORY ${NLOHMANN_JSON_GIT_REPOSITORY} GIT_TAG ${NLOHMANN_JSON_GIT_TAG})
+        else ()
+            FetchContent_Declare(nlohmann_json URL ${NLOHMANN_JSON_URL} URL_HASH ${NLOHMANN_JSON_URL_HASH})
+        endif ()
+        FetchContent_MakeAvailable(nlohmann_json)
+    endif ()
+endif ()
+

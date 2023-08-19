@@ -52,12 +52,12 @@ jobs:
       - name: CMake configure
         if: ${{ contains(matrix.os, 'windows') }}
         run:
-          cmake -B ${{github.workspace}}/build
+          cmake -B ${{github.workspace}}/build -DBUILD_TESTING=1 -DBUILD_EXAMPLE=1
 
       - name: CMake configure
         if: ${{ !contains(matrix.os, 'windows') }}
         run:
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTING=1 -DBUILD_EXAMPLE=1
 
       - name: build
         run:

@@ -13,6 +13,10 @@ target_include_directories(cuke INTERFACE .)
 target_compile_features(cuke INTERFACE cxx_std_17)
 add_library(cuke::cuke ALIAS cuke)
 
-enable_testing()
-add_subdirectory(test)
-add_subdirectory(example/calculator)
+if (BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(test)
+endif
+if (BUILD_EXAMPLE)
+    add_subdirectory(example/calculator)
+endif

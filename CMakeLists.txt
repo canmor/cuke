@@ -16,7 +16,7 @@ add_library(cuke::cuke ALIAS cuke)
 if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
-endif
+endif()
 if (BUILD_EXAMPLE)
     add_subdirectory(example/calculator)
-endif
+endif()
